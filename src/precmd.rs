@@ -14,7 +14,7 @@ fn shorten_path(cwd: &str) -> String {
         _ => return String::from(""),
     };
 
-    tico(&friendly_path)
+    tico(&friendly_path, Option::None)
 }
 
 fn repo_status(r: &Repository, detailed: bool) -> Option<String> {

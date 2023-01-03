@@ -10,10 +10,10 @@ codegen-units = 1
 
 [dependencies]
 ansi_term = "0.12.1"
-clap = "2.33.3"
+clap = "2.34.0"
 dirs = "3.0.2"
 failure = "0.1.8"
-git2 = "0.13.20"
-nix = "0.22.0"
-regex = "1.5.4"
+git2 = "0.15.0"
+nix = "0.24.2"
+regex = "1.7.0"
 tico = "2.0.0"

@@ -1,7 +1,7 @@
-use clap::*;
-use failure::Error;
+use clap::{Arg, ArgAction, ArgMatches, Command};
 use nix::unistd;
 use std::env;
+use failure::Error;
 
 const COMMAND_SYMBOL: &str = "⬢";
 const COMMAND_KEYMAP: &str = "vicmd";
@@ -13,15 +13,16 @@ fn get_username() -> Result<String, Error> {
 }
 
 fn get_hostname() -> Result<String, Error> {
-    let mut buf = [0u8; 64];
-    let hostname_cstr = unistd::gethostname(&mut buf)?;
-    let hostname = hostname_cstr.to_str()?;
-    Ok(hostname.to_string())
+    let hostname_cstr = unistd::gethostname()?;
+    let hostname = hostname_cstr.to_str();
+    Ok(hostname.expect("REASON").to_string())
 }
 
 pub fn display(sub_matches: &ArgMatches) {
     let binding = "0".to_owned();
-    let last_return_code = sub_matches.get_one::<String>("last_return_code").unwrap_or(&binding);
+    let last_return_code = sub_matches
+        .get_one::<String>("last_return_code")
+        .unwrap_or(&binding);
     let binding = "US".to_owned();
     let keymap = sub_matches.get_one::<String>("keymap").unwrap_or(&binding);
     let binding = "".to_owned();
@@ -35,10 +36,9 @@ pub fn display(sub_matches: &ArgMatches) {
     let _command_symbol: &str = sub_matches
         .get_one::<String>("command_symbol")
         .unwrap_or(&binding);
-    //.value_of("command_symbol")
 
-    let _showinfo = sub_matches.contains_id("userhost");
-    let _sshinfo = sub_matches.contains_id("sshinfo");
+    let _showinfo = sub_matches.get_flag("userhost");
+    let _sshinfo = sub_matches.get_flag("sshinfo");
     let userinfo = get_username().unwrap_or_else(|_| "".to_string());
     let hostinfo = get_hostname().unwrap_or_else(|_| "".to_string());
 
@@ -58,7 +58,7 @@ pub fn display(sub_matches: &ArgMatches) {
         _ => format!("%F{{11}}|{}|%f ", venv_name),
     };
 
-    if _showinfo && _sshinfo {
+    if _sshinfo {
         match env::var(SSH_SESSION_ENV) {
             Ok(_) => match userinfo.as_str() {
                 "root" => print!(
@@ -99,13 +99,15 @@ pub fn cli_arguments<'a>() -> clap::Command {
             Arg::new("userhost")
                 .short('u')
                 .long("userhost")
-                .help("Posts a $user@$host info prior prompt").action(ArgAction::SetTrue),
+                .help("Posts a $user@$host info prior prompt")
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("sshinfo")
                 .short('s')
                 .long("sshinfo")
-                .help("Only print $user@$host when inside ssh session").action(ArgAction::SetTrue),
+                .help("Only print $user@$host when inside ssh session")
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("prompt_symbol")

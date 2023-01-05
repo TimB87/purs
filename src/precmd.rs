@@ -196,12 +196,12 @@ pub fn display(sub_matches: &ArgMatches) {
     let display_path = Blue.paint(shorten_path(my_path.to_str().unwrap()));
 
     let branch = match Repository::discover(my_path) {
-        Ok(repo) => repo_status(&repo, sub_matches.contains_id("git-detailed")),
+        Ok(repo) => repo_status(&repo, sub_matches.get_flag("git-detailed")),
         Err(_e) => None,
     };
     let display_branch = Cyan.paint(branch.unwrap_or_default());
 
-    if sub_matches.contains_id("newline") {
+    if sub_matches.get_flag("newline") {
         println!();
     }
     println!("{} {}", display_path, display_branch);
@@ -212,12 +212,14 @@ pub fn cli_arguments<'a>() -> clap::Command {
         .arg(
             Arg::new("git-detailed")
                 .long("git-detailed")
-                .help("Prints detailed git status").action(ArgAction::SetTrue),
+                .help("Prints detailed git status")
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("newline")
                 .long("newline")
                 .short('n')
-                .help("Prints a blank line before the precmd").action(ArgAction::SetTrue),
+                .help("Prints a blank line before the precmd")
+                .action(ArgAction::SetFalse),
         )
 }

@@ -90,7 +90,7 @@ pub fn display(sub_matches: &ArgMatches) {
     }
 }
 
-pub fn cli_arguments<'a>() -> clap::Command {
+pub fn cli_arguments() -> clap::Command {
     Command::new("prompt")
         .arg(Arg::new("last_return_code").short('r'))
         .arg(Arg::new("keymap").short('k'))

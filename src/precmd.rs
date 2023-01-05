@@ -207,7 +207,7 @@ pub fn display(sub_matches: &ArgMatches) {
     println!("{} {}", display_path, display_branch);
 }
 
-pub fn cli_arguments<'a>() -> clap::Command {
+pub fn cli_arguments() -> clap::Command {
     Command::new("precmd")
         .arg(
             Arg::new("git-detailed")

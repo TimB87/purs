@@ -1,6 +1,7 @@
 # Purs
 
 [![Rust](https://github.com/TimB87/purs/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/TimB87/purs/actions/workflows/rust.yml)
+[![rust-clippy analyze](https://github.com/TimB87/purs/actions/workflows/rust-clippy.yml/badge.svg)](https://github.com/TimB87/purs/actions/workflows/rust-clippy.yml)
 
 A [Pure](https://github.com/sindresorhus/pure)-inspired prompt in [Rust](https://www.rust-lang.org/).
 

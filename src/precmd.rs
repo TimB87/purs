@@ -220,6 +220,6 @@ pub fn cli_arguments<'a>() -> clap::Command {
                 .long("newline")
                 .short('n')
                 .help("Prints a blank line before the precmd")
-                .action(ArgAction::SetFalse),
+                .action(ArgAction::SetTrue),
         )
 }

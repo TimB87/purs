@@ -1,4 +1,4 @@
-use clap::{Arg, ArgMatches, Command};
+use clap::*;
 use failure::Error;
 use nix::unistd;
 use std::env;
@@ -90,35 +90,33 @@ pub fn display(sub_matches: &ArgMatches) {
     }
 }
 
-pub fn cli_arguments<'a>() -> Command<'a> {
+pub fn cli_arguments<'a>() -> clap::Command {
     Command::new("prompt")
-        .arg(Arg::new("last_return_code").short('r').takes_value(true))
-        .arg(Arg::new("keymap").short('k').takes_value(true))
-        .arg(Arg::new("venv").short('v').long("venv").takes_value(true))
+        .arg(Arg::new("last_return_code").short('r'))
+        .arg(Arg::new("keymap").short('k'))
+        .arg(Arg::new("venv").short('v').long("venv"))
         .arg(
             Arg::new("userhost")
                 .short('u')
                 .long("userhost")
-                .help("Posts a $user@$host info prior prompt"),
+                .help("Posts a $user@$host info prior prompt").action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("sshinfo")
                 .short('s')
                 .long("sshinfo")
-                .help("Only print $user@$host when inside ssh session"),
+                .help("Only print $user@$host when inside ssh session").action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("prompt_symbol")
                 .short('p')
                 .long("prompt_symbol")
-                .help("Changes the prompt symbol")
-                .takes_value(true),
+                .help("Changes the prompt symbol"),
         )
         .arg(
             Arg::new("command_symbol")
                 .short('c')
                 .long("command_symbol")
-                .help("Changes the command symbol (vim mode)")
-                .takes_value(true),
+                .help("Changes the command symbol (vim mode)"),
         )
 }

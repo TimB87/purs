@@ -1,6 +1,6 @@
 use ansi_term::Colour::{Blue, Cyan, Green, Purple, Red};
 use ansi_term::{ANSIGenericString, ANSIStrings};
-use clap::{Arg, ArgMatches, Command};
+use clap::*;
 use git2::{self, Repository, StatusOptions};
 use regex::Regex;
 use std::env;
@@ -207,17 +207,17 @@ pub fn display(sub_matches: &ArgMatches) {
     println!("{} {}", display_path, display_branch);
 }
 
-pub fn cli_arguments<'a>() -> Command<'a> {
+pub fn cli_arguments<'a>() -> clap::Command {
     Command::new("precmd")
         .arg(
             Arg::new("git-detailed")
                 .long("git-detailed")
-                .help("Prints detailed git status"),
+                .help("Prints detailed git status").action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("newline")
                 .long("newline")
                 .short('n')
-                .help("Prints a blank line before the precmd"),
+                .help("Prints a blank line before the precmd").action(ArgAction::SetTrue),
         )
 }

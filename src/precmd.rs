@@ -1,6 +1,6 @@
 use ansi_term::Colour::{Blue, Cyan, Green, Purple, Red};
 use ansi_term::{ANSIGenericString, ANSIStrings};
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{Arg, ArgMatches, Command};
 use git2::{self, Repository, StatusOptions};
 use regex::Regex;
 use std::env;
@@ -191,33 +191,33 @@ fn get_action(r: &Repository) -> Option<String> {
     None
 }
 
-pub fn display(sub_matches: &ArgMatches<'_>) {
+pub fn display(sub_matches: &ArgMatches) {
     let my_path = env::current_dir().unwrap();
     let display_path = Blue.paint(shorten_path(my_path.to_str().unwrap()));
 
     let branch = match Repository::discover(my_path) {
-        Ok(repo) => repo_status(&repo, sub_matches.is_present("git-detailed")),
+        Ok(repo) => repo_status(&repo, sub_matches.contains_id("git-detailed")),
         Err(_e) => None,
     };
     let display_branch = Cyan.paint(branch.unwrap_or_default());
 
-    if sub_matches.is_present("newline") {
+    if sub_matches.contains_id("newline") {
         println!();
     }
     println!("{} {}", display_path, display_branch);
 }
 
-pub fn cli_arguments<'a>() -> App<'a, 'a> {
-    SubCommand::with_name("precmd")
+pub fn cli_arguments<'a>() -> Command<'a> {
+    Command::new("precmd")
         .arg(
-            Arg::with_name("git-detailed")
+            Arg::new("git-detailed")
                 .long("git-detailed")
                 .help("Prints detailed git status"),
         )
         .arg(
-            Arg::with_name("newline")
+            Arg::new("newline")
                 .long("newline")
-                .short("n")
+                .short('n')
                 .help("Prints a blank line before the precmd"),
         )
 }

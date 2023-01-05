@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{Arg, ArgMatches, Command};
 use failure::Error;
 use nix::unistd;
 use std::env;
@@ -19,29 +19,35 @@ fn get_hostname() -> Result<String, Error> {
     Ok(hostname.to_string())
 }
 
-pub fn display(sub_matches: &ArgMatches<'_>) {
-    let last_return_code = sub_matches.value_of("last_return_code").unwrap_or("0");
-    let keymap = sub_matches.value_of("keymap").unwrap_or("US");
-    let venv_name = sub_matches.value_of("venv").unwrap_or("");
+pub fn display(sub_matches: &ArgMatches) {
+    let binding = "0".to_owned();
+    let last_return_code = sub_matches.get_one::<String>("last_return_code").unwrap_or(&binding);
+    let binding = "US".to_owned();
+    let keymap = sub_matches.get_one::<String>("keymap").unwrap_or(&binding);
+    let binding = "".to_owned();
+    let venv_name = sub_matches.get_one::<String>("venv").unwrap_or(&binding);
     let insert_symbol: &str = "❯";
+    let binding = insert_symbol.to_owned();
     let insert_symbol = sub_matches
-        .value_of("prompt_symbol")
-        .unwrap_or(insert_symbol);
+        .get_one::<String>("prompt_symbol")
+        .unwrap_or(&binding);
+    let binding = COMMAND_SYMBOL.to_owned();
     let _command_symbol: &str = sub_matches
-        .value_of("command_symbol")
-        .unwrap_or(COMMAND_SYMBOL);
+        .get_one::<String>("command_symbol")
+        .unwrap_or(&binding);
+    //.value_of("command_symbol")
 
-    let _showinfo = sub_matches.is_present("userhost");
-    let _sshinfo = sub_matches.is_present("sshinfo");
+    let _showinfo = sub_matches.contains_id("userhost");
+    let _sshinfo = sub_matches.contains_id("sshinfo");
     let userinfo = get_username().unwrap_or_else(|_| "".to_string());
     let hostinfo = get_hostname().unwrap_or_else(|_| "".to_string());
 
-    let symbol = match keymap {
+    let symbol = match keymap.as_str() {
         COMMAND_KEYMAP => _command_symbol,
         _ => insert_symbol,
     };
 
-    let shell_color = match (symbol, last_return_code) {
+    let shell_color = match (symbol, last_return_code.as_str()) {
         (_command_symbol, _) if _command_symbol == COMMAND_SYMBOL => 3,
         (_, NO_ERROR) => 5,
         _ => 9,
@@ -84,42 +90,33 @@ pub fn display(sub_matches: &ArgMatches<'_>) {
     }
 }
 
-pub fn cli_arguments<'a>() -> App<'a, 'a> {
-    SubCommand::with_name("prompt")
+pub fn cli_arguments<'a>() -> Command<'a> {
+    Command::new("prompt")
+        .arg(Arg::new("last_return_code").short('r').takes_value(true))
+        .arg(Arg::new("keymap").short('k').takes_value(true))
+        .arg(Arg::new("venv").short('v').long("venv").takes_value(true))
         .arg(
-            Arg::with_name("last_return_code")
-                .short("r")
-                .takes_value(true),
-        )
-        .arg(Arg::with_name("keymap").short("k").takes_value(true))
-        .arg(
-            Arg::with_name("venv")
-                .short("v")
-                .long("venv")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("userhost")
-                .short("u")
+            Arg::new("userhost")
+                .short('u')
                 .long("userhost")
                 .help("Posts a $user@$host info prior prompt"),
         )
         .arg(
-            Arg::with_name("sshinfo")
-                .short("s")
+            Arg::new("sshinfo")
+                .short('s')
                 .long("sshinfo")
                 .help("Only print $user@$host when inside ssh session"),
         )
         .arg(
-            Arg::with_name("prompt_symbol")
-                .short("p")
+            Arg::new("prompt_symbol")
+                .short('p')
                 .long("prompt_symbol")
                 .help("Changes the prompt symbol")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("command_symbol")
-                .short("c")
+            Arg::new("command_symbol")
+                .short('c')
                 .long("command_symbol")
                 .help("Changes the command symbol (vim mode)")
                 .takes_value(true),

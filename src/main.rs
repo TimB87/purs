@@ -1,18 +1,17 @@
-use clap::{App, AppSettings};
+use clap::Command;
 
 mod precmd;
 mod prompt;
 
 fn main() {
-    let matches = App::new("Purs")
-        .setting(AppSettings::SubcommandRequired)
+    let matches = Command::new("Purs")
         .subcommand(precmd::cli_arguments())
         .subcommand(prompt::cli_arguments())
         .get_matches();
 
     match matches.subcommand() {
-        ("precmd", Some(sub_matches)) => precmd::display(sub_matches),
-        ("prompt", Some(sub_matches)) => prompt::display(sub_matches),
+        Some(("precmd", argmatches)) => precmd::display(argmatches),
+        Some(("prompt", argmatches)) => prompt::display(argmatches),
         _ => (),
     }
 }

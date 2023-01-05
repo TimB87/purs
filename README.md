@@ -1,6 +1,6 @@
 # Purs
 
-[![Build Status](https://travis-ci.org/xcambar/purs.svg?branch=travis)](https://travis-ci.org/xcambar/purs)
+[![Rust](https://github.com/TimB87/purs/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/TimB87/purs/actions/workflows/rust.yml)
 
 A [Pure](https://github.com/sindresorhus/pure)-inspired prompt in [Rust](https://www.rust-lang.org/).
 

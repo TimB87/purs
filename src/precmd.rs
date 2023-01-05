@@ -1,6 +1,6 @@
 use ansi_term::Colour::{Blue, Cyan, Green, Purple, Red};
 use ansi_term::{ANSIGenericString, ANSIStrings};
-use clap::*;
+use clap::{Arg, ArgAction, ArgMatches, Command};
 use git2::{self, Repository, StatusOptions};
 use regex::Regex;
 use std::env;

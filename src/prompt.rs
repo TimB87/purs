@@ -1,7 +1,7 @@
 use clap::{Arg, ArgAction, ArgMatches, Command};
+use failure::Error;
 use nix::unistd;
 use std::env;
-use failure::Error;
 
 const COMMAND_SYMBOL: &str = "⬢";
 const COMMAND_KEYMAP: &str = "vicmd";

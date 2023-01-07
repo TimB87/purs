@@ -9,8 +9,7 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-ansi_term = "0.12.1"
 clap = "4.0.32"
 git2 = "0.15.0"
 nix = "0.26.1"
-tico = "2.0.0"
+colored = "2"

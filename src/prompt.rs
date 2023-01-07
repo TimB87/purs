@@ -21,9 +21,15 @@ fn get_hostname() -> Result<String, Error> {
 
 fn print_prompt(venv: &str, userinfo: &str, hostinfo: &str, shell_color: &i32, symbol: &str) {
     if userinfo == "root" {
-        print!("{}%F{{009}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ", venv, userinfo, hostinfo, shell_color, symbol);
+        print!(
+            "{}%F{{009}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
+            venv, userinfo, hostinfo, shell_color, symbol
+        );
     } else {
-        print!("{}%F{{011}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ", venv, userinfo, hostinfo, shell_color, symbol);
+        print!(
+            "{}%F{{011}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
+            venv, userinfo, hostinfo, shell_color, symbol
+        );
     }
 }
 

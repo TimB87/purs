@@ -1,9 +1,48 @@
-use ansi_term::Colour::{Blue, Cyan, Green, Purple, Red};
-use ansi_term::{ANSIGenericString, ANSIStrings};
 use clap::{Arg, ArgAction, ArgMatches, Command};
+use colored::Colorize;
 use git2::{self, Repository, StatusOptions};
 use std::env;
-use tico::tico;
+
+fn tico(path: &str, home_dir: Option<&str>) -> String {
+    let tico = match home_dir {
+        Some(dir) => path.replacen(dir, "~", 1),
+        None => path.to_owned(),
+    };
+
+    let mut shortened = String::from("");
+    let mut skip_char = false;
+    let mut count = 0;
+    let sections = tico.chars().filter(|&x| x == '/').count();
+
+    for c in tico.chars() {
+        match c {
+            '~' => {
+                if !skip_char {
+                    shortened.push(c)
+                }
+            }
+            '.' => {
+                skip_char = false;
+                shortened.push(c);
+            }
+            '/' => {
+                skip_char = false;
+                count += 1;
+                shortened.push(c)
+            }
+            _ => {
+                if skip_char && count < sections {
+                    continue;
+                } else {
+                    skip_char = true;
+                    shortened.push(c);
+                }
+            }
+        }
+    }
+
+    shortened
+}
 
 fn shorten_path(cwd: &str) -> String {
     let home_dir = env::var("HOME").ok();
@@ -20,50 +59,55 @@ fn repo_status(r: &Repository, detailed: bool) -> Option<String> {
     let mut out = vec![];
 
     if let Some(name) = get_head_shortname(r) {
-        out.push(Cyan.paint(name));
+        out.push(name.cyan());
     }
 
     if !detailed {
         if let Some((index_change, wt_change, conflicted, untracked)) = count_files_statuses(r) {
             if index_change != 0 || wt_change != 0 || conflicted != 0 || untracked != 0 {
-                out.push(Red.bold().paint("*"));
+                out.push("*".red().bold());
             }
         }
     } else {
         if let Some((ahead, behind)) = get_ahead_behind(r) {
             if ahead > 0 {
-                out.push(Cyan.paint(format!("↑{}", ahead)));
+                out.push(format!("↑{}", ahead).cyan());
             }
             if behind > 0 {
-                out.push(Cyan.paint(format!("↓{}", behind)));
+                out.push(format!("↓{}", behind).cyan());
             }
         }
 
         if let Some((index_change, wt_change, conflicted, untracked)) = count_files_statuses(r) {
             if index_change == 0 && wt_change == 0 && conflicted == 0 && untracked == 0 {
-                out.push(Green.paint("✔"));
+                out.push("✔".green());
             } else {
                 if index_change > 0 {
-                    out.push(Green.paint(format!("♦{}", index_change)));
+                    out.push(format!("♦{}", index_change).green());
                 }
                 if conflicted > 0 {
-                    out.push(Red.paint(format!("✖ {}", conflicted)));
+                    out.push(format!("✖ {}", conflicted).red().red());
                 }
                 if wt_change > 0 {
-                    out.push(ANSIGenericString::from(format!("✚ {}", wt_change)));
+                    out.push(format!("✚ {}", wt_change).bright_yellow());
                 }
                 if untracked > 0 {
-                    out.push(ANSIGenericString::from("…"));
+                    out.push("…".bright_yellow());
                 }
             }
         }
 
         if let Some(action) = get_action(r) {
-            out.push(Purple.paint(format!(" {}", action)));
+            out.push(format!(" {}", action).purple());
         }
     }
 
-    Some(ANSIStrings(&out).to_string())
+    Some(
+        out.iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join(" "),
+    )
 }
 
 fn get_ahead_behind(r: &Repository) -> Option<(usize, usize)> {
@@ -192,13 +236,13 @@ fn get_action(r: &Repository) -> Option<String> {
 
 pub fn display(sub_matches: &ArgMatches) {
     let my_path = env::current_dir().unwrap();
-    let display_path = Blue.paint(shorten_path(my_path.to_str().unwrap()));
+    let display_path = shorten_path(my_path.to_str().unwrap()).blue();
 
     let branch = match Repository::discover(my_path) {
         Ok(repo) => repo_status(&repo, sub_matches.get_flag("git-detailed")),
         Err(_e) => None,
     };
-    let display_branch = Cyan.paint(branch.unwrap_or_default());
+    let display_branch = branch.unwrap_or_default().cyan();
 
     if sub_matches.get_flag("newline") {
         println!();

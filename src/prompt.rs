@@ -19,6 +19,14 @@ fn get_hostname() -> Result<String, Error> {
     Ok(hostname)
 }
 
+fn print_prompt(venv: &str, userinfo: &str, hostinfo: &str, shell_color: &i32, symbol: &str) {
+    if userinfo == "root" {
+        print!("{}%F{{009}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ", venv, userinfo, hostinfo, shell_color, symbol);
+    } else {
+        print!("{}%F{{011}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ", venv, userinfo, hostinfo, shell_color, symbol);
+    }
+}
+
 pub fn display(sub_matches: &ArgMatches) {
     let binding = "0".to_owned();
     let last_return_code = sub_matches
@@ -59,33 +67,12 @@ pub fn display(sub_matches: &ArgMatches) {
         _ => format!("%F{{11}}|{}|%f ", venv_name),
     };
 
-    if _sshinfo {
-        match env::var(SSH_SESSION_ENV) {
-            Ok(_) => match userinfo.as_str() {
-                "root" => print!(
-                    "{}%F{{009}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
-                    venv, userinfo, hostinfo, shell_color, symbol
-                ),
-                _ => print!(
-                    "{}%F{{011}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
-                    venv, userinfo, hostinfo, shell_color, symbol
-                ),
-            },
-            Err(_) => {
-                print!("{}%F{{{}}}{}%f ", venv, shell_color, symbol);
-            }
-        }
+    if let Ok(_) = env::var(SSH_SESSION_ENV) {
+        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
+    } else if _sshinfo {
+        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
     } else if _showinfo {
-        match userinfo.as_str() {
-            "root" => print!(
-                "{}%F{{009}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
-                venv, userinfo, hostinfo, shell_color, symbol
-            ),
-            _ => print!(
-                "{}%F{{011}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
-                venv, userinfo, hostinfo, shell_color, symbol
-            ),
-        }
+        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
     } else {
         print!("{}%F{{{}}}{}%f ", venv, shell_color, symbol);
     }

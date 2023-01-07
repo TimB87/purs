@@ -6,10 +6,10 @@ use std::env;
 use tico::tico;
 
 fn shorten_path(cwd: &str) -> String {
-    let home_dir = dirs::home_dir().map(|path| path.to_string_lossy().into_owned());
+    let home_dir = env::var("HOME").ok();
 
     let friendly_path = match home_dir {
-        Some(home) => str::replace(cwd, &home, "~"),
+        Some(home) => cwd.replace(&home, "~"),
         None => cwd.to_string(),
     };
 

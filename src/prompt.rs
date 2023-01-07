@@ -1,5 +1,6 @@
+use crate::prompt::env::VarError;
 use clap::{Arg, ArgAction, ArgMatches, Command};
-use failure::Error;
+use core::fmt::Error;
 use nix::unistd;
 use std::env;
 
@@ -8,14 +9,18 @@ const COMMAND_KEYMAP: &str = "vicmd";
 const NO_ERROR: &str = "0";
 const SSH_SESSION_ENV: &str = "SSH_TTY";
 
-fn get_username() -> Result<String, Error> {
-    Ok(env::var("USER")?)
+fn get_username() -> Result<String, VarError> {
+    let user = "USER";
+    match env::var(user) {
+        Ok(val) => return Ok(val),
+        Err(e) => return Err(e),
+    }
 }
 
 fn get_hostname() -> Result<String, Error> {
-    let hostname_cstr = unistd::gethostname()?;
-    let hostname = hostname_cstr.to_str();
-    Ok(hostname.expect("REASON").to_string())
+    let hostname = unistd::gethostname().expect("Failed getting hostname");
+    let hostname = hostname.into_string().expect("Hostname wasn't valid UTF-8");
+    Ok(hostname)
 }
 
 pub fn display(sub_matches: &ArgMatches) {

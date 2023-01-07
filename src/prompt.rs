@@ -67,11 +67,7 @@ pub fn display(sub_matches: &ArgMatches) {
         _ => format!("%F{{11}}|{}|%f ", venv_name),
     };
 
-    if let Ok(_) = env::var(SSH_SESSION_ENV) {
-        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
-    } else if _sshinfo {
-        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
-    } else if _showinfo {
+    if (_sshinfo && env::var(SSH_SESSION_ENV).is_ok()) || _showinfo {
         print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
     } else {
         print!("{}%F{{{}}}{}%f ", venv, shell_color, symbol);

@@ -10,11 +10,7 @@ const NO_ERROR: &str = "0";
 const SSH_SESSION_ENV: &str = "SSH_TTY";
 
 fn get_username() -> Result<String, VarError> {
-    let user = "USER";
-    match env::var(user) {
-        Ok(val) => return Ok(val),
-        Err(e) => return Err(e),
-    }
+    env::var("USER")
 }
 
 fn get_hostname() -> Result<String, Error> {

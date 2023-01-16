@@ -10,6 +10,6 @@ codegen-units = 1
 
 [dependencies]
 clap = "4.0.32"
-git2 = "0.15.0"
+git2 = "0.16.0"
 nix = "0.26.1"
 colored = "2"

@@ -9,7 +9,7 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-clap = "4.0.32"
-git2 = "0.15.0"
+clap = "4.1.1"
+git2 = "0.16.0"
 nix = "0.26.1"
 colored = "2"

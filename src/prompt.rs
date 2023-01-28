@@ -41,7 +41,6 @@ fn get_hostname() -> Result<String, HostnameError> {
     Ok(hostname)
 }
 
-
 fn print_prompt(
     venv: &str,
     userinfo: &str,

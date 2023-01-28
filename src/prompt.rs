@@ -22,13 +22,11 @@ fn get_hostname() -> Result<String, Error> {
 fn print_prompt(venv: &str, userinfo: &str, hostinfo: &str, shell_color: &i32, symbol: &str) {
     if userinfo == "root" {
         print!(
-            "{}%F{{009}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
-            venv, userinfo, hostinfo, shell_color, symbol
+            "{venv}%F{{009}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
         );
     } else {
         print!(
-            "{}%F{{011}}{}%f@%F{{014}}{}%f %F{{{}}}{}%f ",
-            venv, userinfo, hostinfo, shell_color, symbol
+            "{venv}%F{{011}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
         );
     }
 }
@@ -74,13 +72,13 @@ pub fn display(sub_matches: &ArgMatches) {
 
     let venv = match venv_name.len() {
         0 => String::from(""),
-        _ => format!("%F{{11}}|{}|%f ", venv_name),
+        _ => format!("%F{{11}}|{venv_name}|%f "),
     };
 
     if (_sshinfo && env::var(SSH_SESSION_ENV).is_ok()) || _showinfo {
         print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
     } else {
-        print!("{}%F{{{}}}{}%f ", venv, shell_color, symbol);
+        format!("{venv}%F{{{shell_color}}}{symbol}%f ");
     }
 }
 

@@ -71,10 +71,10 @@ fn repo_status(r: &Repository, detailed: bool) -> Option<String> {
     } else {
         if let Some((ahead, behind)) = get_ahead_behind(r) {
             if ahead > 0 {
-                out.push(format!("↑{}", ahead).cyan());
+                out.push(format!("↑{ahead}").cyan());
             }
             if behind > 0 {
-                out.push(format!("↓{}", behind).cyan());
+                out.push(format!("↓{behind}").cyan());
             }
         }
 
@@ -83,13 +83,13 @@ fn repo_status(r: &Repository, detailed: bool) -> Option<String> {
                 out.push("✔".green());
             } else {
                 if index_change > 0 {
-                    out.push(format!("♦{}", index_change).green());
+                    out.push(format!("♦{index_change}").green());
                 }
                 if conflicted > 0 {
-                    out.push(format!("✖ {}", conflicted).red().red());
+                    out.push(format!("✖ {conflicted}").red());
                 }
                 if wt_change > 0 {
-                    out.push(format!("✚ {}", wt_change).bright_yellow());
+                    out.push(format!("✚ {wt_change}").bright_yellow());
                 }
                 if untracked > 0 {
                     out.push("…".bright_yellow());
@@ -98,7 +98,7 @@ fn repo_status(r: &Repository, detailed: bool) -> Option<String> {
         }
 
         if let Some(action) = get_action(r) {
-            out.push(format!(" {}", action).purple());
+            out.push(format!(" {action}").purple());
         }
     }
 
@@ -247,7 +247,7 @@ pub fn display(sub_matches: &ArgMatches) {
     if sub_matches.get_flag("newline") {
         println!();
     }
-    println!("{} {}", display_path, display_branch);
+    println!("{display_path} {display_branch}");
 }
 
 pub fn cli_arguments() -> clap::Command {

@@ -19,15 +19,26 @@ fn get_hostname() -> Result<String, Error> {
     Ok(hostname)
 }
 
-fn print_prompt(venv: &str, userinfo: &str, hostinfo: &str, shell_color: &i32, symbol: &str) {
-    if userinfo == "root" {
-        print!(
-            "{venv}%F{{009}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
-        );
+fn print_prompt(
+    venv: &str,
+    userinfo: &str,
+    hostinfo: &str,
+    shell_color: &i32,
+    symbol: &str,
+    show_userinfo_hostinfo: bool,
+) {
+    if show_userinfo_hostinfo {
+        if userinfo == "root" {
+            println!(
+                "{venv}%F{{009}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
+            );
+        } else {
+            println!(
+                "{venv}%F{{011}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
+            );
+        }
     } else {
-        print!(
-            "{venv}%F{{011}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
-        );
+        println!("{venv} %F{{{shell_color}}}{symbol}%f ");
     }
 }
 
@@ -76,9 +87,9 @@ pub fn display(sub_matches: &ArgMatches) {
     };
 
     if (_sshinfo && env::var(SSH_SESSION_ENV).is_ok()) || _showinfo {
-        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol);
+        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol, true);
     } else {
-        format!("{venv}%F{{{shell_color}}}{symbol}%f ");
+        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol, false);
     }
 }
 

@@ -1,6 +1,5 @@
 use crate::prompt::env::VarError;
 use clap::{Arg, ArgAction, ArgMatches, Command};
-use core::fmt::Error;
 use nix::unistd;
 use std::env;
 
@@ -13,11 +12,35 @@ fn get_username() -> Result<String, VarError> {
     env::var("USER")
 }
 
-fn get_hostname() -> Result<String, Error> {
-    let hostname = unistd::gethostname().expect("Failed getting hostname");
-    let hostname = hostname.into_string().expect("Hostname wasn't valid UTF-8");
+#[derive(Debug)]
+struct HostnameError {
+    details: String
+}
+
+impl HostnameError {
+    fn new(msg: &str) -> HostnameError {
+        HostnameError{details: msg.to_string()}
+    }
+}
+
+impl std::fmt::Display for HostnameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f,"{}",self.details)
+    }
+}
+
+impl std::error::Error for HostnameError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+fn get_hostname() -> Result<String, HostnameError> {
+    let hostname = unistd::gethostname().map_err(|_| HostnameError::new("Failed getting hostname"))?;
+    let hostname = hostname.into_string().map_err(|_| HostnameError::new("Hostname wasn't valid UTF-8"))?;
     Ok(hostname)
 }
+
 
 fn print_prompt(
     venv: &str,

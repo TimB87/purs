@@ -34,35 +34,39 @@ fn print_prompt(venv: &str, userinfo: &str, hostinfo: &str, shell_color: &i32, s
 }
 
 pub fn display(sub_matches: &ArgMatches) {
-    let binding = "0".to_owned();
     let last_return_code = sub_matches
         .get_one::<String>("last_return_code")
-        .unwrap_or(&binding);
-    let binding = "US".to_owned();
-    let keymap = sub_matches.get_one::<String>("keymap").unwrap_or(&binding);
-    let binding = "".to_owned();
-    let venv_name = sub_matches.get_one::<String>("venv").unwrap_or(&binding);
+        .map(AsRef::as_ref)
+        .unwrap_or("0");
+    let keymap = sub_matches
+        .get_one::<String>("keymap")
+        .map(AsRef::as_ref)
+        .unwrap_or("US");
+    let venv_name = sub_matches
+        .get_one::<String>("venv")
+        .map(AsRef::as_ref)
+        .unwrap_or("");
     let insert_symbol: &str = "❯";
-    let binding = insert_symbol.to_owned();
     let insert_symbol = sub_matches
         .get_one::<String>("prompt_symbol")
-        .unwrap_or(&binding);
-    let binding = COMMAND_SYMBOL.to_owned();
+        .map(AsRef::as_ref)
+        .unwrap_or(insert_symbol);
     let _command_symbol: &str = sub_matches
         .get_one::<String>("command_symbol")
-        .unwrap_or(&binding);
+        .map(AsRef::as_ref)
+        .unwrap_or(COMMAND_SYMBOL);
 
     let _showinfo = sub_matches.get_flag("userhost");
     let _sshinfo = sub_matches.get_flag("sshinfo");
     let userinfo = get_username().unwrap_or_else(|_| "".to_string());
     let hostinfo = get_hostname().unwrap_or_else(|_| "".to_string());
 
-    let symbol = match keymap.as_str() {
+    let symbol = match keymap {
         COMMAND_KEYMAP => _command_symbol,
         _ => insert_symbol,
     };
 
-    let shell_color = match (symbol, last_return_code.as_str()) {
+    let shell_color = match (symbol, last_return_code) {
         (_command_symbol, _) if _command_symbol == COMMAND_SYMBOL => 3,
         (_, NO_ERROR) => 5,
         _ => 9,

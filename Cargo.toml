@@ -7,9 +7,11 @@ edition = "2021"
 [profile.release]
 lto = true
 codegen-units = 1
+strip = true
+opt-level = 3
 
 [dependencies]
-clap = "4.1.2"
+clap = "4.1.6"
 git2 = "0.16.1"
 nix = "0.26.2"
 colored = "2"

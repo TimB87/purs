@@ -3,6 +3,7 @@ use clap::{Arg, ArgAction, ArgMatches, Command};
 use nix::unistd;
 use std::env;
 
+const INSERT_SYMBOL: &str = "❯";
 const COMMAND_SYMBOL: &str = "⬢";
 const COMMAND_KEYMAP: &str = "vicmd";
 const NO_ERROR: &str = "0";
@@ -77,18 +78,17 @@ pub fn display(sub_matches: &ArgMatches) {
         .get_one::<String>("venv")
         .map(AsRef::as_ref)
         .unwrap_or("");
-    let insert_symbol: &str = "❯";
     let insert_symbol = sub_matches
         .get_one::<String>("prompt_symbol")
         .map(AsRef::as_ref)
-        .unwrap_or(insert_symbol);
+        .unwrap_or(INSERT_SYMBOL);
     let _command_symbol: &str = sub_matches
         .get_one::<String>("command_symbol")
         .map(AsRef::as_ref)
         .unwrap_or(COMMAND_SYMBOL);
 
-    let _showinfo = sub_matches.get_flag("userhost");
-    let _sshinfo = sub_matches.get_flag("sshinfo");
+    let showinfo = sub_matches.get_flag("userhost");
+    let sshinfo = sub_matches.get_flag("sshinfo");
     let userinfo = get_username().unwrap_or_else(|_| "".to_string());
     let hostinfo = get_hostname().unwrap_or_else(|_| "".to_string());
 
@@ -108,7 +108,7 @@ pub fn display(sub_matches: &ArgMatches) {
         _ => format!("%F{{11}}|{venv_name}|%f "),
     };
 
-    if (_sshinfo && env::var(SSH_SESSION_ENV).is_ok()) || _showinfo {
+    if (sshinfo && env::var(SSH_SESSION_ENV).is_ok()) || showinfo {
         print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol, true);
     } else {
         print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol, false);

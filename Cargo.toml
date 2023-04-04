@@ -12,6 +12,6 @@ opt-level = 3
 
 [dependencies]
 clap = { version = "4.2.1", default-features = false, features = [ "std", "help", "usage" ] }
-git2 = "0.16.1"
-nix = "0.26.2"
+git2 = "0.17.0"
+nix = { version = "0.26.2", default-features = false, features = [ "hostname" ] }
 colored = "2"

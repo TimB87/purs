@@ -15,18 +15,20 @@ fn get_username() -> Result<String, VarError> {
 
 #[derive(Debug)]
 struct HostnameError {
-    details: String
+    details: String,
 }
 
 impl HostnameError {
     fn new(msg: &str) -> HostnameError {
-        HostnameError{details: msg.to_string()}
+        HostnameError {
+            details: msg.to_string(),
+        }
     }
 }
 
 impl std::fmt::Display for HostnameError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f,"{}",self.details)
+        write!(f, "{}", self.details)
     }
 }
 
@@ -37,8 +39,11 @@ impl std::error::Error for HostnameError {
 }
 
 fn get_hostname() -> Result<String, HostnameError> {
-    let hostname = unistd::gethostname().map_err(|_| HostnameError::new("Failed getting hostname"))?;
-    let hostname = hostname.into_string().map_err(|_| HostnameError::new("Hostname wasn't valid UTF-8"))?;
+    let hostname =
+        unistd::gethostname().map_err(|_| HostnameError::new("Failed getting hostname"))?;
+    let hostname = hostname
+        .into_string()
+        .map_err(|_| HostnameError::new("Hostname wasn't valid UTF-8"))?;
     Ok(hostname)
 }
 

@@ -4,9 +4,9 @@ name: rust-clippy analyze
 
 on:  # yamllint disable-line rule:truthy
   push:
-    branches: ["main"]
+    branches: ["master"]
   pull_request:
-    branches: ["main"]
+    branches: ["master"]
 
 jobs:
   rust-clippy-analyze:

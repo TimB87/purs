@@ -1,6 +1,6 @@
 [package]
 name = "purs"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Xavier Cambar <xcambar@gmail.com>"]
 edition = "2021"
 

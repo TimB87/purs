@@ -4,10 +4,9 @@
 [![rust-clippy analyze](https://github.com/TimB87/purs/actions/workflows/rust-clippy.yml/badge.svg)](https://github.com/TimB87/purs/actions/workflows/rust-clippy.yml)
 
 A [Pure](https://github.com/sindresorhus/pure)-inspired prompt in [Rust](https://www.rust-lang.org/).
+<img src="https://github.com/TimB87/purs/blob/master/static/imgs/prompt.png?raw=true" align="right" width="420" />
 
 Even more minimal, definitively faster and at least as pretty as the original Pure by [Sindre Sohrus](https://github.com/sindresorhus).
-
-![Screenshot of Purs in action](./static/imgs/prompt.png)
 
 ## Installation — Usage
 
@@ -29,14 +28,13 @@ function _prompt_purs_precmd() {
   /PATH/TO/PURS/target/release/purs precmd
 }
 add-zsh-hook precmd _prompt_purs_precmd
-
 ```
 
 ## Why?
 
 1. Learn some Rust
-1. My Pure prompt felt slow on large repos (and indeed, was, compared to Purs)
-1. Learn some Rust
+2. My Pure prompt felt slow on large repos (and indeed, was, compared to Purs)
+3. Learn some Rust
 
 ## Questions
 

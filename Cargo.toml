@@ -1,6 +1,6 @@
 [package]
 name = "purs"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["Xavier Cambar <xcambar@gmail.com>"]
 edition = "2021"
 
@@ -15,3 +15,4 @@ clap = { version = "4.3.19", default-features = false, features = ["std", "help"
 git2 = { version = "0.17.2", default-features = false }
 nix = { version = "0.26.2", default-features = false, features = [ "hostname" ] }
 colored = { version = "2.0.4", default-features = false }
+itertools = { version = "0.11.0" }

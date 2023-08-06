@@ -1,24 +1,27 @@
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use colored::Colorize;
 use git2::{self, Repository, StatusOptions};
+use itertools::join;
 use std::env;
+use std::path::PathBuf;
 
 fn tico(path: &str, home_dir: Option<&str>) -> String {
     let tico = match home_dir {
-        Some(dir) => path.replacen(dir, "~", 1),
+        Some(dir) => path.replace(dir, "~"),
         None => path.to_owned(),
     };
 
-    let mut shortened = String::from("");
-    let mut skip_char = false;
-    let mut count = 0;
     let sections = tico.chars().filter(|&x| x == '/').count();
+    let mut shortened = String::with_capacity(tico.len());
+
+    let mut count = 0;
+    let mut skip_char = false;
 
     for c in tico.chars() {
         match c {
             '~' => {
                 if !skip_char {
-                    shortened.push(c)
+                    shortened.push(c);
                 }
             }
             '.' => {
@@ -28,7 +31,7 @@ fn tico(path: &str, home_dir: Option<&str>) -> String {
             '/' => {
                 skip_char = false;
                 count += 1;
-                shortened.push(c)
+                shortened.push(c);
             }
             _ => {
                 if skip_char && count < sections {
@@ -56,58 +59,50 @@ fn shorten_path(cwd: &str) -> String {
 }
 
 fn repo_status(r: &Repository, detailed: bool) -> Option<String> {
+    let (ahead, behind) = if detailed {
+        get_ahead_behind(r)?
+    } else {
+        (0, 0)
+    };
+
+    let (index_change, wt_change, conflicted, untracked) = count_files_statuses(r)?;
+
     let mut out = vec![];
 
     if let Some(name) = get_head_shortname(r) {
         out.push(name.cyan());
     }
 
-    if !detailed {
-        if let Some((index_change, wt_change, conflicted, untracked)) = count_files_statuses(r) {
-            if index_change != 0 || wt_change != 0 || conflicted != 0 || untracked != 0 {
-                out.push("*".red().bold());
-            }
-        }
+    if ahead > 0 {
+        out.push(format!("↑{}", ahead).cyan());
+    }
+
+    if behind > 0 {
+        out.push(format!("↓{}", behind).cyan());
+    }
+
+    if index_change == 0 && wt_change == 0 && conflicted == 0 && untracked == 0 {
+        out.push("✔".green());
     } else {
-        if let Some((ahead, behind)) = get_ahead_behind(r) {
-            if ahead > 0 {
-                out.push(format!("↑{ahead}").cyan());
-            }
-            if behind > 0 {
-                out.push(format!("↓{behind}").cyan());
-            }
+        if index_change > 0 {
+            out.push(format!("♦ {}", index_change).green());
         }
-
-        if let Some((index_change, wt_change, conflicted, untracked)) = count_files_statuses(r) {
-            if index_change == 0 && wt_change == 0 && conflicted == 0 && untracked == 0 {
-                out.push("✔".green());
-            } else {
-                if index_change > 0 {
-                    out.push(format!("♦{index_change}").green());
-                }
-                if conflicted > 0 {
-                    out.push(format!("✖ {conflicted}").red());
-                }
-                if wt_change > 0 {
-                    out.push(format!("✚ {wt_change}").bright_yellow());
-                }
-                if untracked > 0 {
-                    out.push("…".bright_yellow());
-                }
-            }
+        if conflicted > 0 {
+            out.push(format!("✖ {}", conflicted).red());
         }
-
-        if let Some(action) = get_action(r) {
-            out.push(format!(" {action}").purple());
+        if wt_change > 0 {
+            out.push(format!("✚ {}", wt_change).bright_yellow());
+        }
+        if untracked > 0 {
+            out.push("…".bright_yellow());
         }
     }
 
-    Some(
-        out.iter()
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>()
-            .join(" "),
-    )
+    if let Some(action) = get_action(r) {
+        out.push(format!(" {}", action).purple());
+    }
+
+    Some(join(out.iter(), " "))
 }
 
 fn get_ahead_behind(r: &Repository) -> Option<(usize, usize)> {
@@ -118,97 +113,124 @@ fn get_ahead_behind(r: &Repository) -> Option<(usize, usize)> {
 
     let head_name = head.shorthand()?;
     let head_branch = r.find_branch(head_name, git2::BranchType::Local).ok()?;
-    let upstream = head_branch.upstream().ok()?;
-    let head_oid = head.target()?;
-    let upstream_oid = upstream.get().target()?;
+    if let Ok(upstream) = head_branch.upstream() {
+        let head_oid = head.target()?;
+        let upstream_oid = upstream.get().target()?;
+        return r.graph_ahead_behind(head_oid, upstream_oid).ok();
+    }
 
-    r.graph_ahead_behind(head_oid, upstream_oid).ok()
+    None
 }
 
 fn get_head_shortname(r: &Repository) -> Option<String> {
     let head = r.head().ok()?;
+
     if let Some(shorthand) = head.shorthand() {
         if shorthand != "HEAD" {
             return Some(shorthand.to_string());
         }
     }
 
-    let object = head.peel(git2::ObjectType::Commit).ok()?;
-    let short_id = object.short_id().ok()?;
-
-    Some(format!(
-        ":{}",
-        short_id.iter().map(|ch| *ch as char).collect::<String>()
-    ))
+    Some(format!(":{}", head.target().unwrap()))
 }
 
 fn count_files_statuses(r: &Repository) -> Option<(usize, usize, usize, usize)> {
     let mut opts = StatusOptions::new();
     opts.include_untracked(true);
 
-    fn count_files(statuses: &git2::Statuses<'_>, status: git2::Status) -> usize {
-        statuses
-            .iter()
-            .filter(|entry| entry.status().intersects(status))
-            .count()
-    }
-
     let statuses = r.statuses(Some(&mut opts)).ok()?;
 
-    Some((
-        count_files(
-            &statuses,
-            git2::Status::INDEX_NEW
-                | git2::Status::INDEX_MODIFIED
-                | git2::Status::INDEX_DELETED
-                | git2::Status::INDEX_RENAMED
-                | git2::Status::INDEX_TYPECHANGE,
-        ),
-        count_files(
-            &statuses,
-            git2::Status::WT_MODIFIED
-                | git2::Status::WT_DELETED
-                | git2::Status::WT_TYPECHANGE
-                | git2::Status::WT_RENAMED,
-        ),
-        count_files(&statuses, git2::Status::CONFLICTED),
-        count_files(&statuses, git2::Status::WT_NEW),
-    ))
+    let index_change = statuses
+        .iter()
+        .filter(|entry| {
+            entry.status().intersects(
+                git2::Status::INDEX_NEW
+                    | git2::Status::INDEX_MODIFIED
+                    | git2::Status::INDEX_DELETED
+                    | git2::Status::INDEX_RENAMED
+                    | git2::Status::INDEX_TYPECHANGE,
+            )
+        })
+        .count();
+
+    let wt_change = statuses
+        .iter()
+        .filter(|entry| {
+            entry.status().intersects(
+                git2::Status::WT_MODIFIED
+                    | git2::Status::WT_DELETED
+                    | git2::Status::WT_TYPECHANGE
+                    | git2::Status::WT_RENAMED,
+            )
+        })
+        .count();
+
+    let conflicted = statuses
+        .iter()
+        .filter(|entry| entry.status().contains(git2::Status::CONFLICTED))
+        .count();
+
+    let untracked = statuses
+        .iter()
+        .filter(|entry| entry.status().contains(git2::Status::WT_NEW))
+        .count();
+
+    Some((index_change, wt_change, conflicted, untracked))
 }
 
 // Based on https://github.com/zsh-users/zsh/blob/ed4e37e45c2f5761981cdc6027a5d6abc753176a/Functions/VCS_Info/Backends/VCS_INFO_get_data_git#L11
+fn check_file_exists(paths: &[PathBuf]) -> Option<String> {
+    paths
+        .iter()
+        .find(|path| path.exists())
+        .map(|path| path.file_name().unwrap().to_string_lossy().to_string())
+}
+
 fn get_action(r: &Repository) -> Option<String> {
     let gitdir = r.path();
+    let mut tmp_paths = Vec::new();
 
-    for tmp in &[
-        gitdir.join("rebase-apply"),
-        gitdir.join("rebase"),
-        gitdir.join("..").join(".dotest"),
-    ] {
-        if tmp.join("rebasing").exists() {
-            return Some("rebase".to_string());
-        }
-        if tmp.join("applying").exists() {
-            return Some("am".to_string());
-        }
-        if tmp.exists() {
-            return Some("am/rebase".to_string());
-        }
+    // List of paths to check for existence
+    tmp_paths.push(gitdir.join("rebase-apply"));
+    tmp_paths.push(gitdir.join("rebase"));
+    tmp_paths.push(gitdir.join("..").join(".dotest"));
+
+    if check_file_exists(
+        &tmp_paths
+            .iter()
+            .map(|p| p.join("rebasing"))
+            .collect::<Vec<_>>(),
+    )
+    .is_some()
+    {
+        return Some("rebase".to_string());
+    }
+    if check_file_exists(
+        &tmp_paths
+            .iter()
+            .map(|p| p.join("applying"))
+            .collect::<Vec<_>>(),
+    )
+    .is_some()
+    {
+        return Some("am".to_string());
+    }
+    if check_file_exists(&tmp_paths).is_some() {
+        return Some("am/rebase".to_string());
     }
 
-    for tmp in &[
-        gitdir.join("rebase-merge").join("interactive"),
-        gitdir.join(".dotest-merge").join("interactive"),
-    ] {
-        if tmp.exists() {
-            return Some("rebase-i".to_string());
-        }
+    tmp_paths.clear();
+    tmp_paths.push(gitdir.join("rebase-merge").join("interactive"));
+    tmp_paths.push(gitdir.join(".dotest-merge").join("interactive"));
+    if check_file_exists(&tmp_paths).is_some() {
+        return Some("rebase-i".to_string());
     }
 
-    for tmp in &[gitdir.join("rebase-merge"), gitdir.join(".dotest-merge")] {
-        if tmp.exists() {
-            return Some("rebase-m".to_string());
-        }
+    tmp_paths.clear();
+    tmp_paths.push(gitdir.join("rebase-merge"));
+    tmp_paths.push(gitdir.join(".dotest-merge"));
+    if check_file_exists(&tmp_paths).is_some() {
+        return Some("rebase-m".to_string());
     }
 
     if gitdir.join("MERGE_HEAD").exists() {

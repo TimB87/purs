@@ -94,30 +94,31 @@ pub fn display(sub_matches: &ArgMatches) {
 
     let showinfo = sub_matches.get_flag("userhost");
     let sshinfo = sub_matches.get_flag("sshinfo");
-    let userinfo = get_username().unwrap_or_else(|_| "".to_string());
-    let hostinfo = get_hostname().unwrap_or_else(|_| "".to_string());
+    let userinfo = get_username().unwrap_or_default();
+    let hostinfo = get_hostname().unwrap_or_default();
 
-    let symbol = match keymap {
-        COMMAND_KEYMAP => _command_symbol,
-        _ => insert_symbol,
+    let (symbol, shell_color) = match (keymap, last_return_code) {
+        (COMMAND_KEYMAP, _) => (_command_symbol, 3),
+        (_, NO_ERROR) => (insert_symbol, 5),
+        _ => (insert_symbol, 9),
     };
 
-    let shell_color = match (symbol, last_return_code) {
-        (_command_symbol, _) if _command_symbol == COMMAND_SYMBOL => 3,
-        (_, NO_ERROR) => 5,
-        _ => 9,
-    };
-
-    let venv = match venv_name.len() {
-        0 => String::from(""),
-        _ => format!("%F{{11}}|{venv_name}|%f "),
-    };
-
-    if (sshinfo && env::var(SSH_SESSION_ENV).is_ok()) || showinfo {
-        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol, true);
+    let venv = if !venv_name.is_empty() {
+        format!("%F{{11}}|{}|%f ", venv_name)
     } else {
-        print_prompt(&venv, &userinfo, &hostinfo, &shell_color, symbol, false);
-    }
+        String::new()
+    };
+
+    let should_show_info = sshinfo && env::var(SSH_SESSION_ENV).is_ok() || showinfo;
+
+    print_prompt(
+        &venv,
+        &userinfo,
+        &hostinfo,
+        &shell_color,
+        symbol,
+        should_show_info,
+    );
 }
 
 pub fn cli_arguments() -> clap::Command {

@@ -5,6 +5,47 @@ use itertools::join;
 use std::env;
 use std::path::PathBuf;
 
+enum Symbols {
+    Default,
+    Nerd,
+}
+
+struct Icons {
+    ahead: &'static str,
+    behind: &'static str,
+    success: &'static str,
+    index_change: &'static str,
+    conflicted: &'static str,
+    wt_change: &'static str,
+    untracked: &'static str,
+}
+
+impl Icons {
+    fn new(set: Symbols) -> Self {
+        match set {
+            Symbols::Default => Self {
+                ahead: "↑",
+                behind: "↓",
+                success: "✔",
+                index_change: "♦",
+                conflicted: "✖",
+                wt_change: "✚",
+                untracked: "…",
+            },
+            Symbols::Nerd => Self {
+                ahead: "",
+                behind: "",
+                success: "",
+                index_change: "󰕚",
+                conflicted: "",
+                wt_change: "",
+                untracked: "󰇘",
+            },
+        }
+    }
+}
+
+// adapted from https://github.com/portocodes/tico
 fn tico(path: &str, home_dir: Option<&str>) -> String {
     let tico = match home_dir {
         Some(dir) => path.replace(dir, "~"),
@@ -58,7 +99,9 @@ fn shorten_path(cwd: &str) -> String {
     tico(&friendly_path, Option::None)
 }
 
-fn repo_status(r: &Repository, detailed: bool) -> Option<String> {
+fn repo_status(r: &Repository, detailed: bool, symbol_set: Symbols) -> Option<String> {
+    let icons = Icons::new(symbol_set);
+
     let (ahead, behind) = if detailed {
         get_ahead_behind(r)?
     } else {
@@ -74,32 +117,32 @@ fn repo_status(r: &Repository, detailed: bool) -> Option<String> {
     }
 
     if ahead > 0 {
-        out.push(format!("↑{}", ahead).cyan());
+        out.push(format!("{} {ahead}", icons.ahead).cyan());
     }
 
     if behind > 0 {
-        out.push(format!("↓{}", behind).cyan());
+        out.push(format!("{} {behind}", icons.behind).cyan());
     }
 
     if index_change == 0 && wt_change == 0 && conflicted == 0 && untracked == 0 {
-        out.push("✔".green());
+        out.push(icons.success.green());
     } else {
         if index_change > 0 {
-            out.push(format!("♦ {}", index_change).green());
+            out.push(format!("{} {index_change}", icons.index_change).green());
         }
         if conflicted > 0 {
-            out.push(format!("✖ {}", conflicted).red());
+            out.push(format!("{} {conflicted}", icons.conflicted).red());
         }
         if wt_change > 0 {
-            out.push(format!("✚ {}", wt_change).bright_yellow());
+            out.push(format!("{} {wt_change}", icons.wt_change).bright_yellow());
         }
         if untracked > 0 {
-            out.push("…".bright_yellow());
+            out.push(icons.untracked.bright_yellow());
         }
     }
 
     if let Some(action) = get_action(r) {
-        out.push(format!(" {}", action).purple());
+        out.push(format!(" {action}").purple());
     }
 
     Some(join(out.iter(), " "))
@@ -260,12 +303,24 @@ pub fn display(sub_matches: &ArgMatches) {
     let my_path = env::current_dir().unwrap();
     let display_path = shorten_path(my_path.to_str().unwrap()).blue();
 
+    let theme_str = sub_matches
+        .get_one::<String>("theme")
+        .map(AsRef::as_ref)
+        .unwrap_or("Default");
+
+    let theme = match theme_str.to_lowercase().as_str() {
+        "Default" | "default" => Symbols::Default,
+        "NF" | "nf" | "nerd" | "Nerd" => Symbols::Nerd,
+        // Add more theme options if needed
+        _ => Symbols::Default, // Default to a reasonable fallback
+    };
+
     let branch = match Repository::discover(my_path) {
-        Ok(repo) => repo_status(&repo, sub_matches.get_flag("git-detailed")),
+        Ok(repo) => repo_status(&repo, sub_matches.get_flag("git-detailed"), theme),
         Err(_e) => None,
     };
-    let display_branch = branch.unwrap_or_default().cyan();
 
+    let display_branch = branch.unwrap_or_default().cyan();
     if sub_matches.get_flag("newline") {
         println!();
     }
@@ -279,6 +334,12 @@ pub fn cli_arguments() -> clap::Command {
                 .long("git-detailed")
                 .help("Prints detailed git status")
                 .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("theme")
+                .short('t')
+                .long("theme")
+                .help("Choose between different icon themes"),
         )
         .arg(
             Arg::new("newline")

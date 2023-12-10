@@ -48,21 +48,31 @@ fn get_hostname() -> Result<String, HostnameError> {
 }
 
 fn print_prompt(
-    venv: &str,
+    show_venv: bool,
     userinfo: &str,
     hostinfo: &str,
     shell_color: &i32,
     symbol: &str,
     show_userinfo_hostinfo: bool,
 ) {
+    let venv = if show_venv {
+        if let Ok(venv_path) = env::var("VIRTUAL_ENV_PROMPT") {
+            format!("{venv_path} ")
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    };
+
     if show_userinfo_hostinfo {
         if userinfo == "root" {
             println!(
-                "{venv}%F{{009}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
+                "%F{{034}}{venv}%f%F{{009}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
             );
         } else {
             println!(
-                "{venv}%F{{011}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
+                "%F{{034}}{venv}%f%F{{011}}{userinfo}%f@%F{{014}}{hostinfo}%f %F{{{shell_color}}}{symbol}%f "
             );
         }
     } else {
@@ -79,10 +89,6 @@ pub fn display(sub_matches: &ArgMatches) {
         .get_one::<String>("keymap")
         .map(AsRef::as_ref)
         .unwrap_or("US");
-    let venv_name = sub_matches
-        .get_one::<String>("venv")
-        .map(AsRef::as_ref)
-        .unwrap_or("");
     let insert_symbol = sub_matches
         .get_one::<String>("prompt_symbol")
         .map(AsRef::as_ref)
@@ -94,6 +100,7 @@ pub fn display(sub_matches: &ArgMatches) {
 
     let showinfo = sub_matches.get_flag("userhost");
     let sshinfo = sub_matches.get_flag("sshinfo");
+    let venvinfo = sub_matches.get_flag("venv");
     let userinfo = get_username().unwrap_or_default();
     let hostinfo = get_hostname().unwrap_or_default();
 
@@ -103,21 +110,15 @@ pub fn display(sub_matches: &ArgMatches) {
         _ => (insert_symbol, 9),
     };
 
-    let venv = if !venv_name.is_empty() {
-        format!("%F{{11}}|{}|%f ", venv_name)
-    } else {
-        String::new()
-    };
-
-    let should_show_info = sshinfo && env::var(SSH_SESSION_ENV).is_ok() || showinfo;
+    let should_show_ssh = sshinfo && env::var(SSH_SESSION_ENV).is_ok() || showinfo;
 
     print_prompt(
-        &venv,
+        venvinfo,
         &userinfo,
         &hostinfo,
         &shell_color,
         symbol,
-        should_show_info,
+        should_show_ssh,
     );
 }
 
@@ -125,7 +126,12 @@ pub fn cli_arguments() -> clap::Command {
     Command::new("prompt")
         .arg(Arg::new("last_return_code").short('r'))
         .arg(Arg::new("keymap").short('k'))
-        .arg(Arg::new("venv").short('v').long("venv"))
+        .arg(
+            Arg::new("venv")
+                .short('v')
+                .long("venv")
+                .action(ArgAction::SetTrue),
+        )
         .arg(
             Arg::new("userhost")
                 .short('u')

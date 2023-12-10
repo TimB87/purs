@@ -11,8 +11,8 @@ strip = true
 opt-level = 3
 
 [dependencies]
-clap = { version = "4.4.4", default-features = false, features = ["std", "help"] }
+clap = { version = "4.4.11", default-features = false, features = ["std", "help"] }
 git2 = { version = "0.18.1", default-features = false }
 nix = { version = "0.27.1", default-features = false, features = [ "hostname" ] }
-colored = { version = "2.0.4", default-features = false }
-itertools = { version = "0.11.0" }
+colored = { version = "2.1.0", default-features = false }
+itertools = { version = "0.12.0" }
